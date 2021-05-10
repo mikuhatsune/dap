@@ -1,0 +1,61 @@
+OUTPUT_DIR: "output/in22k_dap_r50"
+MODEL:
+  META_ARCHITECTURE: "GeneralizedRCNN"
+  WEIGHT: "pretrained_models/cls/model_r50_imagenet22k.old_format.pt"
+  BACKBONE:
+    CONV_BODY: "R-50-FPN"
+  RESNETS:
+    # NOTE: The resnet is slightly different from the MSRA model.
+    BACKBONE_OUT_CHANNELS: 256
+    STRIDE_IN_1X1: False
+  RPN:
+    USE_FPN: True
+    ANCHOR_STRIDE: (4, 8, 16, 32, 64)
+    PRE_NMS_TOP_N_TRAIN: 2000
+    PRE_NMS_TOP_N_TEST: 1000
+    POST_NMS_TOP_N_TEST: 1000
+    FPN_POST_NMS_TOP_N_TEST: 1000
+    # FPN_POST_NMS_PER_BATCH: False  # default: True, which is a bug
+  ROI_HEADS:
+    USE_FPN: True
+  ROI_BOX_HEAD:
+    NUM_CLASSES: 21842  # 21841 + 1
+    POOLER_RESOLUTION: 7
+    POOLER_SCALES: (0.25, 0.125, 0.0625, 0.03125)
+    POOLER_SAMPLING_RATIO: 2
+    FEATURE_EXTRACTOR: "FPN2MLPFeatureExtractor"
+    PREDICTOR: "FPNPredictor"
+  # CLS_AGNOSTIC_BBOX_REG: True
+  # IGNORE_CLS_TEST: True
+DATASETS:
+  # 14,000,000 images from 1000 classes. /64 -> ~218750
+  TRAIN: ("TaxImageNet22kSplit64_cam1nms8xyxy",)
+  # TEST: ("voc_2007_test",)
+INPUT:
+  # NOTE: The pixel mean and std are different from the MSRA model!
+  PIXEL_MEAN: [0.485, 0.456, 0.406]
+  TEST_PIXEL_MEAN: [0.485, 0.456, 0.406]
+  PIXEL_STD: [0.229, 0.224, 0.225]
+  TO_BGR255: False
+  MIN_SIZE_TRAIN: (96,160,320,640)
+DATALOADER:
+  SIZE_DIVISIBILITY: 32
+SOLVER:
+  # NOTE: The classifier was trained with WD=1e-5 instead of the more popular
+  # 1e-4. Therefore we use 1e-5 here. The results are better than 1e-4.
+  WEIGHT_DECAY: 0.00001
+  # BASE_LR: 0.002
+  # IMS_PER_BATCH: 16  # 4 gpus, 1 node
+  BASE_LR: 0.008
+  IMS_PER_BATCH: 64  # 16 gpus, 4 node
+  # BASE_LR: 0.032
+  # IMS_PER_BATCH: 256  # 64 gpus, 16 nodes
+  STEPS_EPOCH: ()
+  MAX_EPOCH: 1.
+  CHECKPOINT_EPOCH: 100
+  LOG_PERIOD: 50
+  TEST_PERIOD: 20000
+TEST:
+  # IMS_PER_BATCH: 8  # 4 gpus
+  IMS_PER_BATCH: 32  # 16 gpus
+  # IMS_PER_BATCH: 128  # 64 gpus

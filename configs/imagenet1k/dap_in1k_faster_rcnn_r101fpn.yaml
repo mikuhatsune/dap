@@ -1,0 +1,52 @@
+OUTPUT_DIR: "output/in1k_dap_r101"
+MODEL:
+  META_ARCHITECTURE: "GeneralizedRCNN"
+  WEIGHT: "catalog://ImageNetPretrained/MSRA/R-101"
+  BACKBONE:
+    CONV_BODY: "R-101-FPN"
+  RESNETS:
+    BACKBONE_OUT_CHANNELS: 256
+  RPN:
+    USE_FPN: True
+    ANCHOR_STRIDE: (4, 8, 16, 32, 64)
+    PRE_NMS_TOP_N_TRAIN: 2000
+    PRE_NMS_TOP_N_TEST: 1000
+    POST_NMS_TOP_N_TEST: 1000
+    FPN_POST_NMS_TOP_N_TEST: 1000
+  ROI_HEADS:
+    USE_FPN: True
+  ROI_BOX_HEAD:
+    NUM_CLASSES: 1001
+    POOLER_RESOLUTION: 7
+    POOLER_SCALES: (0.25, 0.125, 0.0625, 0.03125)
+    POOLER_SAMPLING_RATIO: 2
+    FEATURE_EXTRACTOR: "FPN2MLPFeatureExtractor"
+    PREDICTOR: "FPNPredictor"
+  # IGNORE_CLS_TEST: True
+DATASETS:
+  # 1,281,167 images from 1000 classes; bs 256 -> 5004.56 batches
+  TRAIN: ("imagenetcls_train_cam3nms8xyxy",)
+  # 50,000 validation images
+  # TEST: ("voc_2007_test","imagenetcls_test_cam2xyxy")
+  # TEST: ("voc_2007_test",)
+INPUT:
+  MIN_SIZE_TRAIN: (96,160,320,640)
+DATALOADER:
+  SIZE_DIVISIBILITY: 32
+SOLVER:
+  WEIGHT_DECAY: 0.0001
+  # BASE_LR: 0.002  # 4 gpus
+  # IMS_PER_BATCH: 16
+  BASE_LR: 0.004  # 8 gpus
+  IMS_PER_BATCH: 32
+  # BASE_LR: 0.008  # 8 gpus
+  # IMS_PER_BATCH: 64
+  STEPS_EPOCH: ()
+  MAX_EPOCH: 1.
+  CHECKPOINT_EPOCH: 1
+  LOG_PERIOD: 50
+  TEST_PERIOD: 4000
+  WARMUP_FACTOR: 0.01
+  WARMUP_ITERS: 2000
+TEST:
+  IMS_PER_BATCH: 16
